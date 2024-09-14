@@ -1,0 +1,9 @@
+---
+keyId: https://example.com/#key
+signatureHash: c2FtcGw=
+headers:
+- (request-target)
+- host
+- date
+---
+keyId="https://example.com/#key",headers="(request-target) host date",signature="c2FtcGw="

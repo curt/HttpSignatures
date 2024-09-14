@@ -1,0 +1,5 @@
+---
+keyId: https://example.com/?author=alice
+signatureHash: c2FtcGw=
+---
+keyId="https://example.com/?author=alice",signature="c2FtcGw="
