@@ -19,6 +19,9 @@ public class TestSignatureParser
     [DataRow(""""
     keyId="https://example.com/?author=alice",headers="(request-target) host date",signature="abcdef="
     """", "https://example.com/?author=alice", "abcdef=", 3)]
+    [DataRow(""""
+    keyId="https://example.com/?author=alice",signature="abcdef="
+    """", "https://example.com/?author=alice", "abcdef=", 0)]
     public void TestParseValid(string s, string keyId, string signature, int headerCount)
     {
         var results = SignatureParser.Parse(s);
@@ -26,6 +29,6 @@ public class TestSignatureParser
         Assert.IsNotNull(results);
         Assert.AreEqual(keyId, results.KeyId);
         Assert.AreEqual(signature, results.SignatureHash);
-        Assert.AreEqual(3, results.Headers.Count());
+        Assert.AreEqual(headerCount, results.Headers.Count());
     }
 }

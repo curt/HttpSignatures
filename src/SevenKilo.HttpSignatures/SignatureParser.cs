@@ -21,7 +21,12 @@ public static class SignatureParser
             throw new SignatureParserException($"Signature is missing parameters '{string.Join(", ", missingParams)}'.");
         }
 
-        return new SignatureModel(keyValues["keyId"], keyValues["signature"], keyValues["headers"].Split());
+        return new SignatureModel
+        (
+            keyValues["keyId"],
+            keyValues["signature"],
+            keyValues.TryGetValue("headers", out string? value) ? value.Split() : []
+        );
     }
 
     private static IDictionary<string, string> GetKeyValuesFromSignature(string signature)
