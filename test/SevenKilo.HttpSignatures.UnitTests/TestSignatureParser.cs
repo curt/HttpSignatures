@@ -4,31 +4,33 @@ namespace SevenKilo.HttpSignatures.UnitTests;
 public class TestSignatureParser
 {
     [TestMethod]
-    [DataRow(""""
-    keyId="https://example.com/#key",headers="(request-target) host date",signature="abcdef"
-    """", "https://example.com/#key", "abcdef", 3)]
-    [DataRow(""""
-    keyId = "https://example.com/#key" , headers ="(request-target) host date",signature ="abcdef"
-    """", "https://example.com/#key", "abcdef", 3)]
-    [DataRow(""""
-    keyId="https://example.com/#key",headers="(request-target) host date",signature=abcdef
-    """", "https://example.com/#key", "abcdef", 3)]
-    [DataRow(""""
-    keyId="https://example.com/#key",headers="(request-target) host date",signature="abcdef="
-    """", "https://example.com/#key", "abcdef=", 3)]
-    [DataRow(""""
-    keyId="https://example.com/?author=alice",headers="(request-target) host date",signature="abcdef="
-    """", "https://example.com/?author=alice", "abcdef=", 3)]
-    [DataRow(""""
-    keyId="https://example.com/?author=alice",signature="abcdef="
-    """", "https://example.com/?author=alice", "abcdef=", 0)]
-    public void TestParseValid(string s, string keyId, string signature, int headerCount)
+    [DynamicData(nameof(ValidFixtures))]
+    public void TestParseValid(string fixture)
     {
-        var results = SignatureParser.Parse(s);
+        var (frontMatter, content) = YamlFrontMatterParser.Parse<SignatureModel>(File.ReadAllText(fixture));
 
-        Assert.IsNotNull(results);
-        Assert.AreEqual(keyId, results.KeyId);
-        Assert.AreEqual(signature, results.SignatureHash);
-        Assert.AreEqual(headerCount, results.Headers.Count());
+        Assert.IsNotNull(frontMatter);
+        Assert.IsNotNull(content);
+
+        var model = SignatureParser.Parse(content);
+
+        Assert.AreEqual(frontMatter.KeyId, model.KeyId);
+        Assert.AreEqual(frontMatter.SignatureHash, model.SignatureHash);
+        Assert.AreEqual(frontMatter.Headers.Count(), model.Headers.Count());
+        Assert.IsTrue(frontMatter.Headers.All(h => model.Headers.Contains(h)));
+        Assert.IsTrue(model.Headers.All(h => frontMatter.Headers.Contains(h)));
+    }
+
+    private static IEnumerable<string[]> ValidFixtures
+    {
+        get { return GetFixturesForPath("./fixtures/signatures/valid"); }
+    }
+
+    private static IEnumerable<string[]> GetFixturesForPath(string path)
+    {
+        foreach (var fixture in Directory.EnumerateFiles(path, "*.txt"))
+        {
+            yield return new string[] { fixture };
+        }
     }
 }
