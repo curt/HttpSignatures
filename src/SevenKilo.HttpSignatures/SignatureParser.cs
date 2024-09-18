@@ -2,7 +2,7 @@
 
 namespace SevenKilo.HttpSignatures;
 
-public static class SignatureParser
+public class SignatureParser
 {
     // Regular expressions adapted from Mastodon:
     // See: https://github.com/mastodon/mastodon/blob/main/app/lib/signature_parser.rb
@@ -29,7 +29,7 @@ public static class SignatureParser
         );
     }
 
-    private static IDictionary<string, string> GetKeyValuesFromSignature(string signature)
+    private static Dictionary<string, string> GetKeyValuesFromSignature(string signature)
     {
         var keyValues = new Dictionary<string, string>();
         var matches = Regex.Matches(signature, s_paramRegex);
