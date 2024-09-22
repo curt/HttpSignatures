@@ -6,9 +6,25 @@ namespace SevenKilo.HttpSignatures;
 
 public class Signature(IKeyProvider keyProvider)
 {
-    public string Sign(IHeaderValueProvider headers)
+    public Result Sign(ISignatureRequest request, out string? signature)
     {
-        throw new NotImplementedException();
+        signature = null;
+        var keyModel = keyProvider.Get(request.KeyId);
+
+        if (keyModel == null || !keyModel.HasPrivateKey)
+        {
+            return new Result($"Unable to find private key '{request.KeyId}' in provider.");
+        }
+
+        var headerPairs = request.Headers.Select(h => new StringPair(h, request.GetHeaderValue(h)));
+        var payload = GetComparisonPayload(headerPairs);
+
+        using var rsa = new RSACryptoServiceProvider();
+        rsa.ImportFromPem(keyModel.PrivateKey);
+        var signatureHash = Convert.ToBase64String(rsa.SignData(payload, CryptoConfig.MapNameToOID("SHA256")!));
+        var signatureModel = new SignatureModel(request.KeyId, signatureHash, request.Headers);
+
+        return SignatureComposer.Compose(signatureModel, out signature);
     }
 
     public Result Verify(IVerificationRequest request, out StringPairs? headersVerified)
@@ -50,9 +66,9 @@ public class Signature(IKeyProvider keyProvider)
 
     private static bool VerifyPath(KeyModel keyModel, SignatureModel signatureModel, StringPairs headers)
     {
-        var comparisonString = string.Join('\n', headers.Select(h => $"{h.Key}: {h.Value}"));
         var signature = Convert.FromBase64String(signatureModel.SignatureHash);
-        var payload = Encoding.UTF8.GetBytes(comparisonString);
+        var payload = GetComparisonPayload(headers);
+
         using var rsa = new RSACryptoServiceProvider();
         rsa.ImportFromPem(keyModel.PublicKey);
 
@@ -65,5 +81,10 @@ public class Signature(IKeyProvider keyProvider)
         headerPairs = keys.SelectMany(k => request.GetHeaderValues(k).Select(v => new StringPair(k, v)));
 
         return new Result();
+    }
+
+    private static byte[] GetComparisonPayload(StringPairs headerPairs)
+    {
+        return Encoding.UTF8.GetBytes(string.Join('\n', headerPairs.Select(h => $"{h.Key}: {h.Value}")));
     }
 }

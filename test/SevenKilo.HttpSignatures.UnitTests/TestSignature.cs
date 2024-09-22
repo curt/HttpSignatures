@@ -6,6 +6,18 @@ namespace SevenKilo.HttpSignatures.UnitTests;
 public class TestSignature
 {
     [TestMethod]
+    public void TestSignValid()
+    {
+        var keyProvider = DefaultKeyProvider();
+        var signatureRequest = DefaultSignatureRequest();
+        var signature = new Signature(keyProvider);
+        var result = signature.Sign(signatureRequest, out var signatureHeader);
+
+        Assert.IsFalse(result.Errors.Any());
+        Assert.IsNotNull(signatureHeader);
+    }
+
+    [TestMethod]
     public void TestVerifyValid()
     {
         var keyProvider = DefaultKeyProvider();
@@ -44,6 +56,18 @@ public class TestSignature
     private static FakeKeyProvider MissingKeyProvider()
     {
         return new FakeKeyProvider(null, null);
+    }
+
+    private static FakeSignatureRequest DefaultSignatureRequest()
+    {
+        return new FakeSignatureRequest
+        (
+            [
+                new("(request-target)", "post /foo?param=value&pet=dog"),
+                new("host", "example.com"),
+                new("date", "Sun, 05 Jan 2014 21:31:40 GMT"),
+            ]
+        );
     }
 
     private static FakeVerificationRequest DefaultVerificationRequest()

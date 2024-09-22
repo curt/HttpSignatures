@@ -2,7 +2,7 @@
 
 namespace SevenKilo.HttpSignatures;
 
-public class SignatureParser
+public static class SignatureParser
 {
     // Regular expressions adapted from Mastodon:
     // See: https://github.com/mastodon/mastodon/blob/main/app/lib/signature_parser.rb
