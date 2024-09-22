@@ -11,7 +11,7 @@ public class SignatureModel
         Headers = headers;
     }
 
-    public string? KeyId { get; set; }
-    public string? SignatureHash { get; set; }
+    public string KeyId { get; set; } = string.Empty;
+    public string SignatureHash { get; set; } = string.Empty;
     public IEnumerable<string> Headers { get; set; } = [];
 }

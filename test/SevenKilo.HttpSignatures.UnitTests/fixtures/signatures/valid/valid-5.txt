@@ -1,9 +1,9 @@
 ---
 keyId: https://example.com/?author=alice
-signatureHash: abcdef=
+signatureHash: c2FtcGw=
 headers:
 - (request-target)
 - host
 - date
 ---
-keyId="https://example.com/?author=alice",headers="(request-target) host date",signature="abcdef="
+keyId="https://example.com/?author=alice",headers="(request-target) host date",signature="c2FtcGw="

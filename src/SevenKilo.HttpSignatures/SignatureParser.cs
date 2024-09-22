@@ -11,22 +11,31 @@ public class SignatureParser
     private static readonly string s_paramRegex = $@"(?<k>{s_tokenRegex})\s*=\s*((?<v>{s_tokenRegex})|(?<qv>{s_quotedRegex}))";
     private static readonly string[] s_requiredParams = ["keyId", "signature"];
 
-    public static SignatureModel Parse(string signature)
+    public static Result Parse(string signature, out SignatureModel? signatureModel)
     {
+        signatureModel = null;
         var keyValues = GetKeyValuesFromSignature(signature);
         var missingParams = s_requiredParams.Where(p => !keyValues.ContainsKey(p));
 
         if (missingParams.Any())
         {
-            throw new SignatureParserException($"Signature is missing parameters '{string.Join(", ", missingParams)}'.");
+            return new Result($"Signature is missing parameters '{string.Join(", ", missingParams)}'.");
         }
 
-        return new SignatureModel
+        var bytes = new Span<byte>(new byte[128]);
+        if (!Convert.TryFromBase64String(keyValues["signature"], bytes, out var bytesWritten))
+        {
+            return new Result($"Unable to read base64 from signature hash '{keyValues["signature"]}'.");
+        }
+
+        signatureModel = new SignatureModel
         (
             keyValues["keyId"],
             keyValues["signature"],
             keyValues.TryGetValue("headers", out string? value) ? value.Split() : []
         );
+
+        return new Result();
     }
 
     private static Dictionary<string, string> GetKeyValuesFromSignature(string signature)
