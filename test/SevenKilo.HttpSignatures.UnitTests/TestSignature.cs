@@ -6,27 +6,27 @@ namespace SevenKilo.HttpSignatures.UnitTests;
 public class TestSignature
 {
     [TestMethod]
-    public void TestSignValid()
+    public async void TestSignValid()
     {
         var keyProvider = DefaultKeyProvider();
         var signatureRequest = DefaultSignatureRequest();
         var signature = new Signature(keyProvider);
-        var result = signature.Sign(signatureRequest, out var signatureHeader);
+        var result = await signature.SignAsync(signatureRequest);
 
         Assert.IsFalse(result.Errors.Any());
-        Assert.IsNotNull(signatureHeader);
+        Assert.IsNotNull(signature.SignatureComposed);
     }
 
     [TestMethod]
-    public void TestVerifyValid()
+    public async void TestVerifyValid()
     {
         var keyProvider = DefaultKeyProvider();
         var verificationRequest = DefaultVerificationRequest();
         var signature = new Signature(keyProvider);
-        var result = signature.Verify(verificationRequest, out var headersVerified);
+        var result = await signature.VerifyAsync(verificationRequest);
 
         Assert.IsFalse(result.Errors.Any());
-        Assert.IsTrue(headersVerified!.Any());
+        Assert.IsTrue(signature.HeadersVerified!.Any());
     }
 
     [TestMethod]
@@ -37,10 +37,10 @@ public class TestSignature
     public void TestVerifyMissingKeyVerificationRequest()
         => TestVerifyNotValid(DefaultKeyProvider(), MissingKeyVerificationRequest());
 
-    private static void TestVerifyNotValid(IKeyProvider keyProvider, IVerificationRequest verificationRequest)
+    private static async void TestVerifyNotValid(IKeyProvider keyProvider, IVerificationRequest verificationRequest)
     {
         var signature = new Signature(keyProvider);
-        var result = signature.Verify(verificationRequest, out var headersVerified);
+        var result = await signature.VerifyAsync(verificationRequest);
 
         Assert.IsTrue(result.Errors.Any());
     }

@@ -6,10 +6,15 @@ namespace SevenKilo.HttpSignatures;
 
 public class Signature(IKeyProvider keyProvider)
 {
-    public Result Sign(ISignatureRequest request, out string? signature)
+    private StringPairs? _headersVerified;
+    private string? _signatureComposed;
+
+    public StringPairs? HeadersVerified => _headersVerified;
+    public string? SignatureComposed => _signatureComposed;
+
+    public async Task<Result> SignAsync(ISignatureRequest request)
     {
-        signature = null;
-        var keyModel = keyProvider.Get(request.KeyId);
+        var keyModel = await keyProvider.GetKeyModelByKeyIdAsync(request.KeyId);
 
         if (keyModel == null || !keyModel.HasPrivateKey)
         {
@@ -24,28 +29,25 @@ public class Signature(IKeyProvider keyProvider)
         var signatureHash = Convert.ToBase64String(rsa.SignData(payload, CryptoConfig.MapNameToOID("SHA256")!));
         var signatureModel = new SignatureModel(request.KeyId, signatureHash, request.Headers);
 
-        return SignatureComposer.Compose(signatureModel, out signature);
+        return SignatureComposer.Compose(signatureModel, out _signatureComposed);
     }
 
-    public Result Verify(IVerificationRequest request, out StringPairs? headersVerified)
+    public async Task<Result> VerifyAsync(IVerificationRequest request)
     {
-        headersVerified = null;
         StringPairs headerPairs = [];
 
         return SignatureParser.Parse(request.Signature, out var signatureModel)
             && GetHeaderPairsFromRequest(request, signatureModel!, out headerPairs)
             && request.Preverify(signatureModel!, headerPairs!)
-            && Verify(signatureModel!, headerPairs!, out headersVerified);
+            && await VerifyAsync(signatureModel!, headerPairs!);
     }
 
-    private Result Verify(SignatureModel signatureModel, StringPairs headerPairsIn, out StringPairs? headersVerified)
+    private async Task<Result> VerifyAsync(SignatureModel signatureModel, StringPairs headerPairsIn)
     {
-        headersVerified = null;
-
         var headers = signatureModel.Headers;
         var paths = Helpers.TraverseKeyValuePaths(headerPairsIn, headers);
         var keyId = signatureModel.KeyId;
-        var keyModel = keyProvider.Get(keyId);
+        var keyModel = await keyProvider.GetKeyModelByKeyIdAsync(keyId);
 
         if (keyModel == null)
         {
@@ -56,7 +58,7 @@ public class Signature(IKeyProvider keyProvider)
         {
             if (VerifyPath(keyModel, signatureModel, path))
             {
-                headersVerified = path;
+                _headersVerified = path;
                 return new Result();
             }
         }

@@ -2,5 +2,5 @@ namespace SevenKilo.HttpSignatures;
 
 public interface IKeyProvider
 {
-    KeyModel? Get(string keyId);
+    Task<KeyModel?> GetKeyModelByKeyIdAsync(string keyId);
 }

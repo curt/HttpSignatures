@@ -11,4 +11,14 @@ public class FakeKeyProvider(string? publicKey, string? privateKey) : IKeyProvid
 
         return new KeyModel(publicKey, privateKey);
     }
+
+    public Task<KeyModel?> GetKeyModelByKeyIdAsync(string keyId)
+    {
+        if (publicKey == null)
+        {
+            return Task.FromResult<KeyModel?>(null);
+        }
+
+        return Task.FromResult<KeyModel?>(new KeyModel(publicKey, privateKey));
+    }
 }
