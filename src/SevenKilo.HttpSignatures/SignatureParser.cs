@@ -22,12 +22,6 @@ public static class SignatureParser
             return new Result($"Signature is missing parameters '{string.Join(", ", missingParams)}'.");
         }
 
-        var bytes = new Span<byte>(new byte[128]);
-        if (!Convert.TryFromBase64String(keyValues["signature"], bytes, out var bytesWritten))
-        {
-            return new Result($"Unable to read base64 from signature hash '{keyValues["signature"]}'.");
-        }
-
         signatureModel = new SignatureModel
         (
             keyValues["keyId"],
